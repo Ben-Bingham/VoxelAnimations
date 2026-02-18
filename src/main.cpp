@@ -22,11 +22,11 @@
 
 using namespace RenderingUtilities;
 
-using Voxel = unsigned int;
+using Voxel = unsigned char;
 
 class VoxelSpace {
 public:
-    const static size_t n = 48;
+    const static size_t n = 32;
 
     Voxel GetVoxel(size_t x, size_t y, size_t z) {
         return voxels[CoordToIndex(x, y, z)];
