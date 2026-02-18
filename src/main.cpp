@@ -36,27 +36,13 @@ struct VoxelAnimation {
     size_t frameCount{ };
 };
 
-int main() {
-    GLFWwindow* window = InitGraphics();
-
-    glm::ivec2 defaultFramebufferSize{ 1600, 900 };
-    glm::ivec2 lastFrameViewportSize{ defaultFramebufferSize };
-
-    RenderTarget rendererTarget{ defaultFramebufferSize };
-
-    Shader phongShader{
-        "assets\\shaders\\phong.vert",
-        "assets\\shaders\\phong.frag"
-    };
-
-    Camera camera{ };
-
-    VoxelAnimation expandingSpehre{  };
-    expandingSpehre.frameCount = (size_t)(0.9 * (float)VoxelSpace::n);
+VoxelAnimation ExpandingSphereAnimation() {
+    VoxelAnimation anim{  };
+    anim.frameCount = (size_t)(0.9 * (float)VoxelSpace::n);
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
 
-    for (size_t i = 0; i < expandingSpehre.frameCount; ++i) {
+    for (size_t i = 0; i < anim.frameCount; ++i) {
         float r = (float)i;
         VoxelSpace voxels{ };
 
@@ -77,11 +63,30 @@ int main() {
             }
         }
 
-        expandingSpehre.frames.push_back(VoxelFrame{ voxels, count });
+        anim.frames.push_back(VoxelFrame{ voxels, count });
     }
 
-    std::vector<size_t> voxelCounts{ };
-    std::vector<VertexAttributeObject*> frameVAOs{ };
+    return anim;
+}
+
+int main() {
+    GLFWwindow* window = InitGraphics();
+
+    glm::ivec2 defaultFramebufferSize{ 1600, 900 };
+    glm::ivec2 lastFrameViewportSize{ defaultFramebufferSize };
+
+    RenderTarget rendererTarget{ defaultFramebufferSize };
+
+    Shader phongShader{
+        "assets\\shaders\\phong.vert",
+        "assets\\shaders\\phong.frag"
+    };
+
+    Camera camera{ };
+
+    VoxelAnimation anim = ExpandingSphereAnimation();
+
+    std::vector<VertexAttributeObject*> frameVAOs{ }; // TODO should not be raw pointers
     using InstanceBuffer = GlBuffer<unsigned int, GL_ARRAY_BUFFER>;
     std::vector<InstanceBuffer*> instanceBuffers{};
 
@@ -89,7 +94,8 @@ int main() {
     VertexBufferObject vbo{ cube.vertices };
     ElementBufferObject ebo{ cube.indices };
 
-    for (auto& frame : expandingSpehre.frames) {
+    // TODO pull out into its own function
+    for (auto& frame : anim.frames) {
         frameVAOs.push_back(new VertexAttributeObject{ });
         frameVAOs.back()->Bind();
 
@@ -117,8 +123,6 @@ int main() {
                 }
             }
         }
-
-        voxelCounts.push_back(offsets.size());
 
         instanceBuffers.push_back(new InstanceBuffer{ offsets });
 
@@ -166,7 +170,7 @@ int main() {
             lastAnimationFrameStartTime = 0.0f;
         }
 
-        if (currentAnimationFrame >= expandingSpehre.frameCount) {
+        if (currentAnimationFrame >= anim.frameCount) {
             currentAnimationFrame = 0;
         }
 
@@ -192,7 +196,7 @@ int main() {
             phongShader.SetMat4("mvp", mvp);
             phongShader.SetMat4("model", transform.matrix);
 
-            glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, voxelCounts[currentAnimationFrame]);
+            glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, anim.frames[currentAnimationFrame].voxelCount);
 
             rendererTarget.Unbind();
         }
