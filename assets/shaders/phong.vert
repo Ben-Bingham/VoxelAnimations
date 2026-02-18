@@ -13,8 +13,10 @@ out vec3 fragPosition;
 
 uniform vec3 cameraPosition;
 
+uniform int voxelSpaceSize;
+
 void main() {
-	uint n = 8u; // TODO make a uniform
+	uint n = uint(voxelSpaceSize);
 	uint zDirection = inOffset % n;
 	uint yDirection = (inOffset / n) % n;
 	uint xDirection = inOffset / (n * n); 

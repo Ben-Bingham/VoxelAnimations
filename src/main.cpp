@@ -194,6 +194,7 @@ int main() {
             phongShader.Bind();
             phongShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
             phongShader.SetVec3("cameraPosition", camera.position);
+            phongShader.SetInt("voxelSpaceSize", VoxelSpace::n);
 
             frameVAOs[currentAnimationFrame]->Bind();
 
