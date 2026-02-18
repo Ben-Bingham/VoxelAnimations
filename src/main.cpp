@@ -22,6 +22,13 @@
 
 using namespace RenderingUtilities;
 
+using Voxel = unsigned int;
+
+struct VoxelSpace {
+    const static size_t n = 32;
+    std::array<std::array<std::array<Voxel, n>, n>, n> voxels;
+};
+
 int main() {
     GLFWwindow* window = InitGraphics();
 
@@ -66,6 +73,26 @@ int main() {
 
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
+
+    VoxelSpace voxels{ };
+
+    for (size_t x = 0; x < VoxelSpace::n; ++x) {
+        for (size_t y = 0; y < VoxelSpace::n; ++y) {
+            for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                float X = (float)x;
+                float Y = (float)y;
+                float Z = (float)z;
+
+                float r = 16.0f;
+
+                voxels.voxels[x][y][z] = 0;
+
+                if (X * X + Y * Y + Z * Z > r * r) {
+                    voxels.voxels[x][y][z] = 1;
+                }
+            }
+        }
+    }
 
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
