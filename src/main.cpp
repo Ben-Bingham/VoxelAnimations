@@ -26,7 +26,7 @@ using Voxel = unsigned int;
 
 class VoxelSpace {
 public:
-    const static size_t n = 32;
+    const static size_t n = 8;
 
     Voxel GetVoxel(size_t x, size_t y, size_t z) {
         return voxels[x][y][z];
@@ -59,6 +59,13 @@ int main() {
 
     Shape cube = GetCube();
 
+    std::vector<float> offsets{
+        0.0f,
+        20.0f
+    };
+
+    VertexBufferObject instanceBufferObject{ offsets };
+
     VertexBufferObject vbo{ cube.vertices };
 
     ElementBufferObject ebo{ cube.indices };
@@ -72,7 +79,13 @@ int main() {
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+    instanceBufferObject.Bind();
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(3);
+    glVertexAttribDivisor(3, 1); // The divisor of 1 means 1 of these per instance
+
     vao.Unbind();
+    instanceBufferObject.Unbind();
     vbo.Unbind();
     ebo.Unbind();
 
@@ -85,7 +98,7 @@ int main() {
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
 
-    size_t animationFrameCount = 30;
+    size_t animationFrameCount = 10;
     std::vector<VoxelSpace> frames{ };
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
@@ -164,7 +177,7 @@ int main() {
                         phongShader.SetMat4("mvp", mvp);
                         phongShader.SetMat4("model", transform.matrix);
 
-                        glDrawElements(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr);
+                        glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, 2);
                     }
                 }
             }
