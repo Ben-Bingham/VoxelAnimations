@@ -55,6 +55,32 @@ int main() {
 
     Camera camera{ };
 
+    size_t animationFrameCount = 10;
+    std::vector<VoxelSpace> frames{ };
+
+    glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
+
+    for (size_t i = 0; i < animationFrameCount; ++i) {
+        float r = (float)i;
+        VoxelSpace voxels{ };
+
+        for (size_t x = 0; x < VoxelSpace::n; ++x) {
+            for (size_t y = 0; y < VoxelSpace::n; ++y) {
+                for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                    glm::vec3 pos{ (float)x, (float)y, (float)z };
+
+                    voxels.SetVoxel(x, y, z, 0);
+
+                    if (glm::distance(pos, center) < r) {
+                        voxels.SetVoxel(x, y, z, 1);
+                    }
+                }
+            }
+        }
+
+        frames.push_back(voxels);
+    }
+
     VertexAttributeObject vao{ };
 
     Shape cube = GetCube();
@@ -97,32 +123,6 @@ int main() {
 
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
-
-    size_t animationFrameCount = 10;
-    std::vector<VoxelSpace> frames{ };
-
-    glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
-
-    for (size_t i = 0; i < animationFrameCount; ++i) {
-        float r = (float)i;
-        VoxelSpace voxels{ };
-
-        for (size_t x = 0; x < VoxelSpace::n; ++x) {
-            for (size_t y = 0; y < VoxelSpace::n; ++y) {
-                for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                    glm::vec3 pos{ (float)x, (float)y, (float)z };
-
-                    voxels.SetVoxel(x, y, z, 0);
-
-                    if (glm::distance(pos, center) < r) {
-                        voxels.SetVoxel(x, y, z, 1);
-                    }
-                }
-            }
-        }
-
-        frames.push_back(voxels);
-    }
 
     size_t currentAnimationFrame = 5;
     float animationFrameRate = 30.0f;
