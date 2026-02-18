@@ -21,9 +21,11 @@ public:
 
     size_t PrimitiveCount(size_t frame);
 
-    VoxelAnimation animation;
+    size_t FrameCount();
 
 private:
+    VoxelAnimation m_Animation;
+
     std::vector<RenderingUtilities::VertexAttributeObject*> m_Vaos{ };
     std::vector<InstanceBuffer*> m_InstanceBuffers{ };
 

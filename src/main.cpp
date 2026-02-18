@@ -72,7 +72,7 @@ int main() {
             lastAnimationFrameStartTime = 0.0f;
         }
 
-        if (currentAnimationFrame >= geometry.animation.frameCount) {
+        if (currentAnimationFrame >= geometry.FrameCount()) {
             currentAnimationFrame = 0;
         }
 

@@ -1,7 +1,7 @@
 #include "AnimationGeometry.h"
 
 AnimationGeometry::AnimationGeometry(VoxelAnimation anim, Shape shape)
-    : animation(anim), m_Shape(shape), m_ElementCount(shape.Size()), m_Vbo(shape.vertices), m_Ebo(shape.indices) {
+    : m_Animation(anim), m_Shape(shape), m_ElementCount(shape.Size()), m_Vbo(shape.vertices), m_Ebo(shape.indices) {
 
     for (auto& frame : anim.frames) {
         m_Vaos.push_back(new RenderingUtilities::VertexAttributeObject{ });
@@ -57,5 +57,9 @@ size_t AnimationGeometry::ElementCount() {
 }
 
 size_t AnimationGeometry::PrimitiveCount(size_t frame) {
-    return animation.frames[frame].voxelCount;
+    return m_Animation.frames[frame].voxelCount;
+}
+
+size_t AnimationGeometry::FrameCount() {
+    return m_Animation.frameCount;
 }
