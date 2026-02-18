@@ -85,11 +85,12 @@ int main() {
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
 
+    size_t animationFrameCount = 8;
     std::vector<VoxelSpace> frames{ };
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
 
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < animationFrameCount; ++i) {
         float r = (float)i;
         VoxelSpace voxels{ };
 
@@ -110,7 +111,11 @@ int main() {
         frames.push_back(voxels);
     }
 
-    size_t currentFrame = 5;
+    size_t currentAnimationFrame = 5;
+    float animationFrameRate = 30.0f;
+    float timePerAnimationFrame = 1.0f / animationFrameRate; // Time in seconds
+
+    float lastAnimationFrameStartTime = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
@@ -120,6 +125,16 @@ int main() {
         glm::ivec2 mousePositionWRTViewport{ mousePosition.x - viewportOffset.x, lastFrameViewportSize.y - (viewportOffset.y - mousePosition.y) };
 
         MoveCamera(camera, window, static_cast<float>(frameTime.count()), mousePositionWRTViewport, lastFrameViewportSize, mouseOverViewPort);
+
+        if (lastAnimationFrameStartTime >= timePerAnimationFrame) {
+            ++currentAnimationFrame;
+
+            lastAnimationFrameStartTime = 0.0f;
+        }
+
+        if (currentAnimationFrame >= animationFrameCount) {
+            currentAnimationFrame = 0;
+        }
 
         {
             TimeScope renderingTimeScope{ &renderTime };
@@ -138,7 +153,7 @@ int main() {
             for (size_t x = 0; x < VoxelSpace::n; ++x) {
                 for (size_t y = 0; y < VoxelSpace::n; ++y) {
                     for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                        if (frames[currentFrame].GetVoxel(x, y, z) <= 0) continue;
+                        if (frames[currentAnimationFrame].GetVoxel(x, y, z) <= 0) continue;
 
                         transform.position = glm::vec3{ (float)x, (float)y, (float)z };
 
@@ -190,6 +205,8 @@ int main() {
         }
 
         lastFrameViewportSize = newViewportSize;
+
+        lastAnimationFrameStartTime += frameTime.count();
 
         glfwSwapBuffers(window);
     }
