@@ -85,24 +85,32 @@ int main() {
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
 
-    VoxelSpace voxels{ };
+    std::vector<VoxelSpace> frames{ };
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
-    float r = 3.0f;
 
-    for (size_t x = 0; x < VoxelSpace::n; ++x) {
-        for (size_t y = 0; y < VoxelSpace::n; ++y) {
-            for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                glm::vec3 pos{ (float)x, (float)y, (float)z };
+    for (size_t i = 0; i < 10; ++i) {
+        float r = (float)i;
+        VoxelSpace voxels{ };
 
-                voxels.SetVoxel(x, y, z, 0);
+        for (size_t x = 0; x < VoxelSpace::n; ++x) {
+            for (size_t y = 0; y < VoxelSpace::n; ++y) {
+                for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                    glm::vec3 pos{ (float)x, (float)y, (float)z };
 
-                if (glm::distance(pos, center) < r) {
-                    voxels.SetVoxel(x, y, z, 1);
+                    voxels.SetVoxel(x, y, z, 0);
+
+                    if (glm::distance(pos, center) < r) {
+                        voxels.SetVoxel(x, y, z, 1);
+                    }
                 }
             }
         }
+
+        frames.push_back(voxels);
     }
+
+    size_t currentFrame = 5;
 
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
@@ -130,7 +138,7 @@ int main() {
             for (size_t x = 0; x < VoxelSpace::n; ++x) {
                 for (size_t y = 0; y < VoxelSpace::n; ++y) {
                     for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                        if (voxels.GetVoxel(x, y, z) <= 0) continue;
+                        if (frames[currentFrame].GetVoxel(x, y, z) <= 0) continue;
 
                         transform.position = glm::vec3{ (float)x, (float)y, (float)z };
 
