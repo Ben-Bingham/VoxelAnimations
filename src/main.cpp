@@ -154,7 +154,8 @@ int main() {
     ebo.Unbind();
 
     Transform transform{ };
-    transform.position = glm::vec3{ 0.0f, 0.0f, 0.0f };
+    transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
+    transform.position.z -= (float)VoxelSpace::n; // Slide it backwards into view
 
     std::chrono::duration<double> frameTime{ };
     std::chrono::duration<double> renderTime{ };
