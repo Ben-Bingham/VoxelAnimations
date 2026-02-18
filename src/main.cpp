@@ -26,14 +26,14 @@ using Voxel = unsigned int;
 
 class VoxelSpace {
 public:
-    const static size_t n = 8;
+    const static size_t n = 48;
 
     Voxel GetVoxel(size_t x, size_t y, size_t z) {
-        return voxels[x][y][z];
+        return voxels[CoordToIndex(x, y, z)];
     }
 
     void SetVoxel(size_t x, size_t y, size_t z, Voxel voxel) {
-        voxels[x][y][z] = voxel;
+        voxels[CoordToIndex(x, y, z)] = voxel;
     }
 
     size_t VoxelCount() {
@@ -50,7 +50,11 @@ public:
     }
 
 private:
-    std::array<std::array<std::array<Voxel, n>, n>, n> voxels;
+    size_t CoordToIndex(size_t x, size_t y, size_t z) {
+        return (z * VoxelSpace::n * VoxelSpace::n) + (y * VoxelSpace::n) + x;
+    }
+
+    std::array<Voxel, n * n * n> voxels;
 };
 
 int main() {
@@ -68,7 +72,7 @@ int main() {
 
     Camera camera{ };
 
-    size_t animationFrameCount = 10;
+    size_t animationFrameCount = (size_t)(0.9 * (float)VoxelSpace::n);
     std::vector<VoxelSpace> frames{ };
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
