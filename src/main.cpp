@@ -24,8 +24,19 @@ using namespace RenderingUtilities;
 
 using Voxel = unsigned int;
 
-struct VoxelSpace {
+class VoxelSpace {
+public:
     const static size_t n = 8;
+
+    Voxel GetVoxel(size_t x, size_t y, size_t z) {
+        return voxels[x][y][z];
+    }
+
+    void SetVoxel(size_t x, size_t y, size_t z, Voxel voxel) {
+        voxels[x][y][z] = voxel;
+    }
+
+private:
     std::array<std::array<std::array<Voxel, n>, n>, n> voxels;
 };
 
@@ -84,10 +95,10 @@ int main() {
             for (size_t z = 0; z < VoxelSpace::n; ++z) {
                 glm::vec3 pos{ (float)x, (float)y, (float)z };
 
-                voxels.voxels[x][y][z] = 0;
+                voxels.SetVoxel(x, y, z, 0);
 
                 if (glm::distance(pos, center) < r) {
-                    voxels.voxels[x][y][z] = 1;
+                    voxels.SetVoxel(x, y, z, 1);
                 }
             }
         }
@@ -119,7 +130,7 @@ int main() {
             for (size_t x = 0; x < VoxelSpace::n; ++x) {
                 for (size_t y = 0; y < VoxelSpace::n; ++y) {
                     for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                        if (voxels.voxels[x][y][z] <= 0) continue;
+                        if (voxels.GetVoxel(x, y, z) <= 0) continue;
 
                         transform.position = glm::vec3{ (float)x, (float)y, (float)z };
 
