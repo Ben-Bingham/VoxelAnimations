@@ -20,6 +20,7 @@
 #include "MoveCamera.h"
 #include "Boilerplate.h"
 #include "AnimationExamples.h"
+#include "AnimationGeometry.h"
 
 using namespace RenderingUtilities;
 
@@ -38,60 +39,7 @@ int main() {
 
     Camera camera{ };
 
-    VoxelAnimation anim = ExpandingSphereAnimation();
-
-    std::vector<VertexAttributeObject*> frameVAOs{ }; // TODO should not be raw pointers
-    using InstanceBuffer = GlBuffer<unsigned int, GL_ARRAY_BUFFER>;
-    std::vector<InstanceBuffer*> instanceBuffers{};
-
-    Shape cube = GetCube();
-    VertexBufferObject vbo{ cube.vertices };
-    ElementBufferObject ebo{ cube.indices };
-
-    // TODO pull out into its own function
-    for (auto& frame : anim.frames) {
-        frameVAOs.push_back(new VertexAttributeObject{ });
-        frameVAOs.back()->Bind();
-
-        vbo.Bind();
-        ebo.Bind();
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-
-        std::vector<unsigned int> offsets{ };
-
-        for (size_t x = 0; x < VoxelSpace::n; ++x) {
-            for (size_t y = 0; y < VoxelSpace::n; ++y) {
-                for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                    if (frame.voxels.GetVoxel(x, y, z) > 0) {
-                        unsigned int offset = (z * VoxelSpace::n * VoxelSpace::n) + (y * VoxelSpace::n) + x;
-                        
-                        offsets.push_back(offset);
-                    }
-                }
-            }
-        }
-
-        instanceBuffers.push_back(new InstanceBuffer{ offsets });
-
-        instanceBuffers.back()->Bind();
-        glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, 1 * sizeof(unsigned int), (void*)0);
-        glEnableVertexAttribArray(3);
-        glVertexAttribDivisor(3, 1); // The divisor of 1 means 1 of these per instance
-
-        frameVAOs.back()->Unbind();
-        vbo.Unbind();
-        ebo.Unbind();
-    }
-
-    vbo.Unbind();
-    ebo.Unbind();
+    AnimationGeometry geometry{ ExpandingSphereAnimation(), GetCube() };
 
     Transform transform{ };
     transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
@@ -124,7 +72,7 @@ int main() {
             lastAnimationFrameStartTime = 0.0f;
         }
 
-        if (currentAnimationFrame >= anim.frameCount) {
+        if (currentAnimationFrame >= geometry.animation.frameCount) {
             currentAnimationFrame = 0;
         }
 
@@ -141,7 +89,7 @@ int main() {
             phongShader.SetVec3("cameraPosition", camera.position);
             phongShader.SetInt("voxelSpaceSize", VoxelSpace::n);
 
-            frameVAOs[currentAnimationFrame]->Bind();
+            geometry.Bind(currentAnimationFrame);
 
             glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
             transform.CalculateMatrix();
@@ -150,7 +98,7 @@ int main() {
             phongShader.SetMat4("mvp", mvp);
             phongShader.SetMat4("model", transform.matrix);
 
-            glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, anim.frames[currentAnimationFrame].voxelCount);
+            glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
 
             rendererTarget.Unbind();
         }
