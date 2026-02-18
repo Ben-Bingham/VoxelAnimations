@@ -37,7 +37,7 @@ public:
     }
 
     size_t VoxelCount() {
-        size_t count;
+        size_t count = 0;
         for (size_t x = 0; x < VoxelSpace::n; ++x) {
             for (size_t y = 0; y < VoxelSpace::n; ++y) {
                 for (size_t z = 0; z < VoxelSpace::n; ++z) {
@@ -96,6 +96,9 @@ int main() {
 
     std::vector<size_t> voxelCounts{ };
     std::vector<VertexAttributeObject*> frameVAOs{ };
+    using InstanceBuffer = GlBuffer<unsigned int, GL_ARRAY_BUFFER>;
+    std::vector<InstanceBuffer*> instanceBuffers{};
+
     Shape cube = GetCube();
     VertexBufferObject vbo{ cube.vertices };
     ElementBufferObject ebo{ cube.indices };
@@ -115,20 +118,26 @@ int main() {
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
         glEnableVertexAttribArray(2);
 
-        std::vector<float> offsets{ };
+        std::vector<unsigned int> offsets{ };
 
         for (size_t x = 0; x < VoxelSpace::n; ++x) {
-            if (frame.GetVoxel(x, VoxelSpace::n / 2, VoxelSpace::n / 2) > 0) {
-                offsets.push_back((float)x);
+            for (size_t y = 0; y < VoxelSpace::n; ++y) {
+                for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                    if (frame.GetVoxel(x, y, z) > 0) {
+                        unsigned int offset = (z * VoxelSpace::n * VoxelSpace::n) + (y * VoxelSpace::n) + x;
+                        
+                        offsets.push_back(offset);
+                    }
+                }
             }
         }
 
         voxelCounts.push_back(offsets.size());
 
-        VertexBufferObject instanceBufferObject{ offsets };
+        instanceBuffers.push_back(new InstanceBuffer{ offsets });
 
-        instanceBufferObject.Bind();
-        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(float), (void*)0);
+        instanceBuffers.back()->Bind();
+        glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, 1 * sizeof(unsigned int), (void*)0);
         glEnableVertexAttribArray(3);
         glVertexAttribDivisor(3, 1); // The divisor of 1 means 1 of these per instance
 
@@ -141,7 +150,7 @@ int main() {
     ebo.Unbind();
 
     Transform transform{ };
-    transform.position = glm::vec3{ 0.0f, 0.0f, 5.0f };
+    transform.position = glm::vec3{ 0.0f, 0.0f, 0.0f };
 
     std::chrono::duration<double> frameTime{ };
     std::chrono::duration<double> renderTime{ };
