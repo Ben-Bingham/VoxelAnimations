@@ -26,7 +26,7 @@ using Voxel = unsigned int;
 
 class VoxelSpace {
 public:
-    const static size_t n = 8;
+    const static size_t n = 32;
 
     Voxel GetVoxel(size_t x, size_t y, size_t z) {
         return voxels[x][y][z];
@@ -85,7 +85,7 @@ int main() {
     bool mouseOverViewPort{ false };
     glm::ivec2 viewportOffset{ 0, 0 };
 
-    size_t animationFrameCount = 8;
+    size_t animationFrameCount = 30;
     std::vector<VoxelSpace> frames{ };
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };

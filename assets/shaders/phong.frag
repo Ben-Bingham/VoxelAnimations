@@ -30,14 +30,14 @@ void main() {
     DirectionalLight dirLight;
     dirLight.direction = vec3(1.0, 1.0, 1.0);
     dirLight.direction = normalize(dirLight.direction);
-    dirLight.ambient = vec3(0.2);
-    dirLight.diffuse = vec3(0.4);
-    dirLight.specular = vec3(0.05);
+    dirLight.ambient = vec3(0.4);
+    dirLight.diffuse = vec3(0.8);
+    dirLight.specular = vec3(0.1);
 
     Phong phong;
-    phong.ambient = vec3(0.2) * color;
-    phong.diffuse = vec3(0.4) * color;
-    phong.specular = vec3(0.05) * color;
+    phong.ambient = vec3(0.4) * color;
+    phong.diffuse = vec3(0.8) * color;
+    phong.specular = vec3(0.1) * color;
     phong.shininess = 32.0;
 
     vec3 norm = normalize(normal);
