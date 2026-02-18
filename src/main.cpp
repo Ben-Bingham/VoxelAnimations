@@ -37,9 +37,9 @@ int main() {
 
     RenderTarget rendererTarget{ defaultFramebufferSize };
 
-    Shader solidShader{
-        "assets\\shaders\\solid.vert",
-        "assets\\shaders\\solid.frag"
+    Shader phongShader{
+        "assets\\shaders\\phong.vert",
+        "assets\\shaders\\phong.frag"
     };
 
     Camera camera{ };
@@ -110,8 +110,9 @@ int main() {
             glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            solidShader.Bind();
-            solidShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
+            phongShader.Bind();
+            phongShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
+            phongShader.SetVec3("cameraPosition", camera.position);
 
             vao.Bind();
 
@@ -126,7 +127,8 @@ int main() {
                         transform.CalculateMatrix();
                         glm::mat4 mvp = projection * camera.View() * transform.matrix;
 
-                        solidShader.SetMat4("mvp", mvp);
+                        phongShader.SetMat4("mvp", mvp);
+                        phongShader.SetMat4("model", transform.matrix);
 
                         glDrawElements(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr);
                     }
