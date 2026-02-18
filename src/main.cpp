@@ -36,6 +36,19 @@ public:
         voxels[x][y][z] = voxel;
     }
 
+    size_t VoxelCount() {
+        size_t count;
+        for (size_t x = 0; x < VoxelSpace::n; ++x) {
+            for (size_t y = 0; y < VoxelSpace::n; ++y) {
+                for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                    if (GetVoxel(x, y, z) == 1) ++count;
+                }
+            }
+        }
+
+        return count;
+    }
+
 private:
     std::array<std::array<std::array<Voxel, n>, n>, n> voxels;
 };
@@ -81,37 +94,49 @@ int main() {
         frames.push_back(voxels);
     }
 
-    VertexAttributeObject vao{ };
-
+    std::vector<size_t> voxelCounts{ };
+    std::vector<VertexAttributeObject*> frameVAOs{ };
     Shape cube = GetCube();
-
-    std::vector<float> offsets{
-        0.0f,
-        20.0f
-    };
-
-    VertexBufferObject instanceBufferObject{ offsets };
-
     VertexBufferObject vbo{ cube.vertices };
-
     ElementBufferObject ebo{ cube.indices };
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    for (auto& frame : frames) {
+        frameVAOs.push_back(new VertexAttributeObject{ });
+        frameVAOs.back()->Bind();
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+        vbo.Bind();
+        ebo.Bind();
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
 
-    instanceBufferObject.Bind();
-    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(3);
-    glVertexAttribDivisor(3, 1); // The divisor of 1 means 1 of these per instance
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
 
-    vao.Unbind();
-    instanceBufferObject.Unbind();
+        std::vector<float> offsets{ };
+
+        for (size_t x = 0; x < VoxelSpace::n; ++x) {
+            if (frame.GetVoxel(x, VoxelSpace::n / 2, VoxelSpace::n / 2) > 0) {
+                offsets.push_back((float)x);
+            }
+        }
+
+        voxelCounts.push_back(offsets.size());
+
+        VertexBufferObject instanceBufferObject{ offsets };
+
+        instanceBufferObject.Bind();
+        glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, 1 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(3);
+        glVertexAttribDivisor(3, 1); // The divisor of 1 means 1 of these per instance
+
+        frameVAOs.back()->Unbind();
+        vbo.Unbind();
+        ebo.Unbind();
+    }
+
     vbo.Unbind();
     ebo.Unbind();
 
@@ -161,26 +186,16 @@ int main() {
             phongShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
             phongShader.SetVec3("cameraPosition", camera.position);
 
-            vao.Bind();
+            frameVAOs[currentAnimationFrame]->Bind();
 
-            for (size_t x = 0; x < VoxelSpace::n; ++x) {
-                for (size_t y = 0; y < VoxelSpace::n; ++y) {
-                    for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                        if (frames[currentAnimationFrame].GetVoxel(x, y, z) <= 0) continue;
+            glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
+            transform.CalculateMatrix();
+            glm::mat4 mvp = projection * camera.View() * transform.matrix;
 
-                        transform.position = glm::vec3{ (float)x, (float)y, (float)z };
+            phongShader.SetMat4("mvp", mvp);
+            phongShader.SetMat4("model", transform.matrix);
 
-                        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
-                        transform.CalculateMatrix();
-                        glm::mat4 mvp = projection * camera.View() * transform.matrix;
-
-                        phongShader.SetMat4("mvp", mvp);
-                        phongShader.SetMat4("model", transform.matrix);
-
-                        glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, 2);
-                    }
-                }
-            }
+            glDrawElementsInstanced(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr, voxelCounts[currentAnimationFrame]);
 
             rendererTarget.Unbind();
         }
