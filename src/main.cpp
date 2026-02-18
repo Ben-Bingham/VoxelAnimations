@@ -23,6 +23,19 @@
 
 using namespace RenderingUtilities;
 
+struct VoxelFrame {
+    VoxelSpace voxels{ };
+
+    size_t voxelCount{ };
+};
+
+struct VoxelAnimation {
+    std::vector<VoxelFrame> frames{ };
+
+    float frameRate{ };
+    size_t frameCount{ };
+};
+
 int main() {
     GLFWwindow* window = InitGraphics();
 
@@ -38,15 +51,16 @@ int main() {
 
     Camera camera{ };
 
-    size_t animationFrameCount = (size_t)(0.9 * (float)VoxelSpace::n);
-    std::vector<VoxelSpace> frames{ };
+    VoxelAnimation expandingSpehre{  };
+    expandingSpehre.frameCount = (size_t)(0.9 * (float)VoxelSpace::n);
 
     glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
 
-    for (size_t i = 0; i < animationFrameCount; ++i) {
+    for (size_t i = 0; i < expandingSpehre.frameCount; ++i) {
         float r = (float)i;
         VoxelSpace voxels{ };
 
+        size_t count{ 0 };
         for (size_t x = 0; x < VoxelSpace::n; ++x) {
             for (size_t y = 0; y < VoxelSpace::n; ++y) {
                 for (size_t z = 0; z < VoxelSpace::n; ++z) {
@@ -56,12 +70,14 @@ int main() {
 
                     if (glm::distance(pos, center) < r) {
                         voxels.SetVoxel(x, y, z, 1);
+
+                        ++count;
                     }
                 }
             }
         }
 
-        frames.push_back(voxels);
+        expandingSpehre.frames.push_back(VoxelFrame{ voxels, count });
     }
 
     std::vector<size_t> voxelCounts{ };
@@ -73,7 +89,7 @@ int main() {
     VertexBufferObject vbo{ cube.vertices };
     ElementBufferObject ebo{ cube.indices };
 
-    for (auto& frame : frames) {
+    for (auto& frame : expandingSpehre.frames) {
         frameVAOs.push_back(new VertexAttributeObject{ });
         frameVAOs.back()->Bind();
 
@@ -93,7 +109,7 @@ int main() {
         for (size_t x = 0; x < VoxelSpace::n; ++x) {
             for (size_t y = 0; y < VoxelSpace::n; ++y) {
                 for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                    if (frame.GetVoxel(x, y, z) > 0) {
+                    if (frame.voxels.GetVoxel(x, y, z) > 0) {
                         unsigned int offset = (z * VoxelSpace::n * VoxelSpace::n) + (y * VoxelSpace::n) + x;
                         
                         offsets.push_back(offset);
@@ -150,7 +166,7 @@ int main() {
             lastAnimationFrameStartTime = 0.0f;
         }
 
-        if (currentAnimationFrame >= animationFrameCount) {
+        if (currentAnimationFrame >= expandingSpehre.frameCount) {
             currentAnimationFrame = 0;
         }
 
