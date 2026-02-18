@@ -25,7 +25,7 @@ using namespace RenderingUtilities;
 using Voxel = unsigned int;
 
 struct VoxelSpace {
-    const static size_t n = 32;
+    const static size_t n = 8;
     std::array<std::array<std::array<Voxel, n>, n>, n> voxels;
 };
 
@@ -46,11 +46,11 @@ int main() {
 
     VertexAttributeObject vao{ };
 
-    Shape triangle = GetTriangle();
+    Shape cube = GetCube();
 
-    VertexBufferObject vbo{ triangle.vertices };
+    VertexBufferObject vbo{ cube.vertices };
 
-    ElementBufferObject ebo{ triangle.indices };
+    ElementBufferObject ebo{ cube.indices };
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -76,18 +76,17 @@ int main() {
 
     VoxelSpace voxels{ };
 
+    glm::vec3 center{ (float)(VoxelSpace::n / 2.0f) };
+    float r = 3.0f;
+
     for (size_t x = 0; x < VoxelSpace::n; ++x) {
         for (size_t y = 0; y < VoxelSpace::n; ++y) {
             for (size_t z = 0; z < VoxelSpace::n; ++z) {
-                float X = (float)x;
-                float Y = (float)y;
-                float Z = (float)z;
-
-                float r = 16.0f;
+                glm::vec3 pos{ (float)x, (float)y, (float)z };
 
                 voxels.voxels[x][y][z] = 0;
 
-                if (X * X + Y * Y + Z * Z > r * r) {
+                if (glm::distance(pos, center) < r) {
                     voxels.voxels[x][y][z] = 1;
                 }
             }
@@ -114,14 +113,25 @@ int main() {
             solidShader.Bind();
             solidShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
 
-            glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
-            transform.CalculateMatrix();
-            glm::mat4 mvp = projection * camera.View() * transform.matrix;
-
-            solidShader.SetMat4("mvp", mvp);
-
             vao.Bind();
-            glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
+
+            for (size_t x = 0; x < VoxelSpace::n; ++x) {
+                for (size_t y = 0; y < VoxelSpace::n; ++y) {
+                    for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                        if (voxels.voxels[x][y][z] <= 0) continue;
+
+                        transform.position = glm::vec3{ (float)x, (float)y, (float)z };
+
+                        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
+                        transform.CalculateMatrix();
+                        glm::mat4 mvp = projection * camera.View() * transform.matrix;
+
+                        solidShader.SetMat4("mvp", mvp);
+
+                        glDrawElements(GL_TRIANGLES, cube.Size(), GL_UNSIGNED_INT, nullptr);
+                    }
+                }
+            }
 
             rendererTarget.Unbind();
         }
