@@ -39,11 +39,32 @@ int main() {
 
     Camera camera{ };
 
+    VertexAttributeObject vao{ };
+
+    Shape triangle = GetTriangle();
+
+    VertexBufferObject vbo{ triangle.vertices };
+
+    ElementBufferObject ebo{ triangle.indices };
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    vao.Unbind();
+    vbo.Unbind();
+    ebo.Unbind();
+
     AnimationGeometry geometry{ ExpandingSphereAnimation(), GetCube() };
 
     Transform transform{ };
-    transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
-    transform.position.z -= (float)VoxelSpace::n; // Slide it backwards into view
+    //transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
+    //transform.position.z -= (float)VoxelSpace::n; // Slide it backwards into view
 
     std::chrono::duration<double> frameTime{ };
     std::chrono::duration<double> renderTime{ };
@@ -98,7 +119,10 @@ int main() {
             phongShader.SetMat4("mvp", mvp);
             phongShader.SetMat4("model", transform.matrix);
 
-            glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
+            //glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
+
+            vao.Bind();
+            glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
 
             rendererTarget.Unbind();
         }
