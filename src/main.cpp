@@ -95,6 +95,9 @@ int main() {
 
     float lastAnimationFrameStartTime = 0.0f;
 
+    bool renderMesh = true;
+    bool renderVoxels = true;
+
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
 
@@ -127,27 +130,33 @@ int main() {
             phongShader.SetVec3("cameraPosition", camera.position);
             phongShader.SetInt("voxelSpaceSize", VoxelSpace::n);
 
-            geometry.Bind(currentAnimationFrame);
-
             glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
-            transform.CalculateMatrix();
-            glm::mat4 mvp = projection * camera.View() * transform.matrix;
 
-            phongShader.SetMat4("mvp", mvp);
-            phongShader.SetMat4("model", transform.matrix);
+            if (renderVoxels) {
+                geometry.Bind(currentAnimationFrame);
 
-            glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
+                transform.CalculateMatrix();
+                glm::mat4 mvp = projection * camera.View() * transform.matrix;
 
-            vao.Bind();
-            Transform triangleTransform{ };
-            triangleTransform.CalculateMatrix();
-            phongShader.SetVec3("color", glm::vec3{ 0.0f, 1.0f, 0.0f });
+                phongShader.SetMat4("mvp", mvp);
+                phongShader.SetMat4("model", transform.matrix);
 
-            mvp = projection * camera.View() * triangleTransform.matrix;
+                glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
 
-            phongShader.SetMat4("mvp", mvp);
+            }
 
-            glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
+            if (renderMesh) {
+                vao.Bind();
+                Transform triangleTransform{ };
+                triangleTransform.CalculateMatrix();
+                phongShader.SetVec3("color", glm::vec3{ 0.0f, 1.0f, 0.0f });
+
+                glm::mat4 mvp = projection * camera.View() * triangleTransform.matrix;
+
+                phongShader.SetMat4("mvp", mvp);
+
+                glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
+            }
 
             rendererTarget.Unbind();
         }
@@ -176,6 +185,12 @@ int main() {
             viewportOffset = glm::ivec2{ (int)ImGui::GetCursorPos().x, (int)ImGui::GetCursorPos().y };
 
         } ImGui::End(); // Viewport
+
+        { ImGui::Begin("Settings");
+            ImGui::Checkbox("Render Voxels", &renderVoxels);
+            ImGui::Checkbox("Render Mesh", &renderMesh);
+
+        } ImGui::End(); // Settings
 
         ImGuiEndFrame();
 
