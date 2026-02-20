@@ -43,6 +43,23 @@ int main() {
 
     Shape triangle = GetTriangle();
 
+    // Apply this transform directly to the triangles vertices to simplify future voxelization
+    Transform triangleTransform{ };
+    triangleTransform.scale = glm::vec3{ 30.0f };
+    triangleTransform.position = glm::vec3{ 0.0f, 0.0f, -30.0f };
+    triangleTransform.CalculateMatrix();
+
+    // Need to += 8 because triangle vertices store more then position
+    for (size_t i = 0; i < triangle.vertices.size(); i += 8) {
+        glm::vec4 vertex{ triangle.vertices[i], triangle.vertices[i + 1], triangle.vertices[i + 2], 1.0f };
+
+        vertex = triangleTransform.matrix * vertex;
+
+        triangle.vertices[i] = vertex.x;
+        triangle.vertices[i + 1] = vertex.y;
+        triangle.vertices[i + 2] = vertex.z;
+    }
+
     VertexBufferObject vbo{ triangle.vertices };
 
     ElementBufferObject ebo{ triangle.indices };
@@ -60,11 +77,11 @@ int main() {
     vbo.Unbind();
     ebo.Unbind();
 
-    AnimationGeometry geometry{ ExpandingSphereAnimation(), GetCube() };
+    AnimationGeometry geometry{ Voxelize(triangle), GetCube() };
 
     Transform transform{ };
-    //transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
-    //transform.position.z -= (float)VoxelSpace::n; // Slide it backwards into view
+    transform.position = glm::vec3{ (float)VoxelSpace::n / -2.0f }; // Center the scene at the origin
+    transform.position.z -= (float)VoxelSpace::n; // Slide it backwards into view
 
     std::chrono::duration<double> frameTime{ };
     std::chrono::duration<double> renderTime{ };
@@ -119,9 +136,17 @@ int main() {
             phongShader.SetMat4("mvp", mvp);
             phongShader.SetMat4("model", transform.matrix);
 
-            //glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
+            glDrawElementsInstanced(GL_TRIANGLES, geometry.ElementCount(), GL_UNSIGNED_INT, nullptr, geometry.PrimitiveCount(currentAnimationFrame));
 
             vao.Bind();
+            Transform triangleTransform{ };
+            triangleTransform.CalculateMatrix();
+            phongShader.SetVec3("color", glm::vec3{ 0.0f, 1.0f, 0.0f });
+
+            mvp = projection * camera.View() * triangleTransform.matrix;
+
+            phongShader.SetMat4("mvp", mvp);
+
             glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
 
             rendererTarget.Unbind();

@@ -34,3 +34,25 @@ VoxelAnimation ExpandingSphereAnimation() {
 
     return anim;
 }
+
+VoxelAnimation Voxelize(Shape mesh) {
+    VoxelAnimation anim{ };
+    anim.frameCount = 1;
+
+    VoxelSpace voxels{ };
+
+    size_t count{ 0 };
+    for (size_t x = 0; x < VoxelSpace::n; ++x) {
+        for (size_t y = 0; y < VoxelSpace::n; ++y) {
+            for (size_t z = 0; z < VoxelSpace::n; ++z) {
+                voxels.SetVoxel(x, y, z, 1);
+
+                ++count;
+            }
+        }
+    }
+
+    anim.frames.push_back(VoxelFrame{ voxels, count });
+
+    return anim;
+}

@@ -4,6 +4,7 @@ AnimationGeometry::AnimationGeometry(VoxelAnimation anim, Shape shape)
     : m_Animation(anim), m_Shape(shape), m_ElementCount(shape.Size()), m_Vbo(shape.vertices), m_Ebo(shape.indices) {
 
     for (auto& frame : anim.frames) {
+        // TODO make these not raw pointers
         m_Vaos.push_back(new RenderingUtilities::VertexAttributeObject{ });
         m_Vaos.back()->Bind();
 
